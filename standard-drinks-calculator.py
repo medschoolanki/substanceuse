@@ -21,7 +21,7 @@ tab1, tab2 = st.tabs(["🍷 Alcohol Calculator", "💨 Nicotine Calculator"])
 # ALCOHOL CALCULATOR TAB
 with tab1:
     st.header("Standard Drinks Calculator")
-    st.write("A standard drink calculation using the formula: Volume (mL) × %ABV ÷ 17.7")
+    st.write("A standard drink calculation using the formula: Volume (mL) × %ABV ÷ 17.05")
     
     # Create two columns for alcohol calculator
     alc_col1, alc_col2 = st.columns([3, 2])
@@ -96,43 +96,67 @@ with tab1:
         # Show percentage equivalent
         st.write(f"*Equivalent to {abv_decimal * 100:.1f}% ABV*")
 
+        # Number of drinks input
+        st.subheader("Quantity")
+        num_drinks = st.number_input(
+            "Number of drinks of this amount:",
+            min_value=1,
+            step=1,
+            value=1,
+            key="num_drinks"
+        )
+
         # Calculate button for alcohol
         alc_calculate = st.button("Calculate Standard Drinks", type="primary", key="alc_calc")
 
     # Function to calculate standard drinks using supervisor's formula
     def calculate_standard_drinks_new(volume_ml, abv_decimal):
-        # Formula: Volume in mL × %ABV ÷ 17.7
-        standard_drinks = (volume_ml * abv_decimal) / 17.7
+        # Formula: Volume in mL × %ABV ÷ 17.05
+        standard_drinks = (volume_ml * abv_decimal) / 17.05
         return standard_drinks
 
     # Results section for alcohol
     with alc_col2:
         st.subheader("Results")
         if alc_calculate:
-            standard_drinks = calculate_standard_drinks_new(volume_ml, abv_decimal)
+            single_drink_standard = calculate_standard_drinks_new(volume_ml, abv_decimal)
+            total_standard_drinks = single_drink_standard * num_drinks
             
             st.markdown(f"""
-            ### 🥃 {standard_drinks:.2f} standard drinks
+            ### 🥃 {total_standard_drinks:.2f} total standard drinks
             
             **Details:**
             - Beverage: {beverage_type}
-            - Volume: {volume} {volume_unit} ({volume_ml:.0f} mL)
+            - Volume per drink: {volume} {volume_unit} ({volume_ml:.0f} mL)
             - ABV: {abv_decimal:.3f} ({abv_decimal * 100:.1f}%)
+            - Number of drinks: {num_drinks}
+            - Standard drinks per unit: {single_drink_standard:.2f}
             
             **Calculation:**
-            {volume_ml:.0f} mL × {abv_decimal:.3f} ÷ 17.7 = {standard_drinks:.2f}
+            ({volume_ml:.0f} mL × {abv_decimal:.3f} ÷ 17.05) × {num_drinks} = {total_standard_drinks:.2f}
             """)
             
             # Visual representation
-            if standard_drinks > 0:
-                full_drinks = int(standard_drinks)
-                partial = standard_drinks - full_drinks
+            if total_standard_drinks > 0:
+                full_drinks = int(total_standard_drinks)
+                partial = total_standard_drinks - full_drinks
                 
-                drink_icons = "🥃 " * full_drinks
-                if partial >= 0.5:
-                    drink_icons += "🥄 "
+                # Limit visual icons to prevent overwhelming display
+                if full_drinks <= 20:
+                    drink_icons = "🥃 " * full_drinks
+                    if partial >= 0.5:
+                        drink_icons += "🥄 "
+                    st.markdown(f"**Visual:** {drink_icons}")
+                else:
+                    st.markdown(f"**Visual:** 🥃 × {full_drinks} drinks" + (" + 🥄" if partial >= 0.5 else ""))
                     
-                st.markdown(f"**Visual:** {drink_icons}")
+            # Show breakdown if multiple drinks
+            if num_drinks > 1:
+                st.markdown(f"""
+                **Breakdown:**
+                - Per drink: {single_drink_standard:.2f} standard drinks
+                - Total ({num_drinks} drinks): {total_standard_drinks:.2f} standard drinks
+                """)
         else:
             st.info("Enter your beverage details and click Calculate")
 
@@ -260,7 +284,7 @@ with tab2:
 st.markdown("---")
 st.markdown("""
 ### Important Information
-* **Alcohol**: This calculator uses the formula provided: Volume (mL) × %ABV ÷ 17.7
+* **Alcohol**: This calculator uses the formula provided: Volume (mL) × %ABV ÷ 17.05
 * **Nicotine**: 21mg of nicotine equals 1 pack-per-day equivalence
 * These calculators are for educational purposes only
 * Always use substances responsibly
